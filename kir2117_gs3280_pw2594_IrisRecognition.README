@@ -1,0 +1,76 @@
+
+Group Project: Iris Texture Analysis and Recognition
+Kaylen Rivers (kir2117), Gauri Samith (gs3280), Pinqiao Wang (pw2594)
+
+
+Design Overview and Logic
+-------------------------
+
+Pupil and Iris Detection: The initial detection uses simple intensity projections and contour analysis for efficient and fairly accurate pupil localization. The iris is detected through edge-based Hough Circle Transform within a binarized region, targeting circular patterns.
+get_pupil_center() : This estimates the pupil center using the vertical and horizontal projections of pixel intensities. 
+get_pupil_radius() : This returns the radius of the pupil by analyzing a 120x120 region of interest around the estimated center. Contour detection is used to fit a circle to the largest contour (assumed to be the pupil) in the region of interest. The center coordinates are then refined and a radius is estimated as well.
+get_pupil_iris_location() : This further analyzes a region around the pupil for iris detection. Gaussian smoothing and edge detection are applied, followed by the Hough Circle Transform to find circular shapes, isolating the pupil and iris. Thresholding techniques are used to enhance the visibility of these regions.
+
+Normalization: Iris points are mapped from polar coordinates (Daugman’s rubber sheet model) to normalize the iris to a fixed shape. This ensures consistency in analysis, as all irises are aligned and scaled.
+Daugman_normalization() : The detected iris is transformed into a polar-coordinate representation by mapping points from the pupil boundary to the iris boundary in a 2D array. This "normalized" iris simplifies further analysis or matching.
+
+Background estimation and Image Enhancement: To mitigate uneven lighting effects by estimating and removing the background. Histogram equalization additionally improves contrast in local blocks, making the image more consistent.
+get_background_estimation() : The background lighting is estimated using smaller 16x16 blocks. For each block, the mean is used for representation in the smaller resized image. This is the resized to the original dimensions to smooth out lighting variations across the image.
+apply_background() : Subtracts the background estimation from the original image to improve contrast, making details clearer.
+enhance_image(): Histogram equalization is applied on 32x32 blocks across the image to adjust local contrast to balance visibility in various regions of the iris and pupil.
+
+Feature Extraction:  Converting the normalized and enhanced iris image into a feature vector. First, the image is cropped to the upper portion. Next, the defined filter is applied on the image twice, first with a dx, dy value of 3 and 4.5, and then with 1.5 and 1.5. The results of the filter are then concatenated and passed onwards for iris matching. 
+cropROI(img) crops the image to an upper portion.
+apply_defined_filter(img, d_x, d_y) Applies the filter, as it is defined in the paper, to the image to create a filtered image. 
+extract_feature_vector(img) Takes the filtered image and extracts the feature vector from it. 
+
+Matching: This part matches test iris feature vectors to training vectors using L1, L2, and cosine distances, calculating the CRR for each measure.
+match_iris: Computes CRR by identifying the closest match for each test vector in the training set based on a specified distance measure (L1, L2, cosine). Loops over test vectors, calculates the distance to each training vector, and records matches.
+match_with_reduction: Reduces feature dimensions using LDA or LLE, then calculates CRR for each distance measure. Checks `num_components` for suitability with LDA and falls back to LLE if needed.
+knn_recognition_rate: Helper function to compute CRR using KNN with specified distance metrics (manhattan, euclidean, cosine) on reduced-dimensional data.
+bootstrap_matching: Performs repeated sampling of the test set to estimate CRR and FMR/FNMR rates across thresholds. Uses LLE for reduction, then iterates over bootstrap samples to calculate average FMR/FNMR
+Key Variables:
+train_features/test_features: Feature vectors for training/test images.
+rain_labels/test_labels: Corresponding class labels.
+distance_type: Specifies distance measure (1 for L1, 2 for L2, 3 for cosine).
+num_components: Sets the number of components for dimensionality reduction.
+Metric: KNN distance metric is used for similarity in reduced dimensions.
+Repetitions/threshold_list: Number of bootstrap repetitions and FMR/FNMR thresholds.
+
+Evaluation: This section evaluates how dimensionality reduction impacts the CRR across varying dimensions.
+compute_crr_summary: Computes and displays the CRR for the original and reduced feature sets using L1, L2, and cosine measures. Loops through each distance measure for both the full and reduced dimensions, calculates the CRR, and displays the results in a table. It also generates an ROC curve for the cosine measure.
+evaluate_dimensionality_reduction: Tests the CRR for varying dimensions (from 40 to 200) after dimensionality reduction. For each dimension, it applies dimensionality reduction using LDA or LLE, calculates the cosine CRR, and plots CRR values against dimensions.
+plot_roc_curve: Generates and saves an ROC curve based on FMR and FNMR values, providing a visualization of performance.
+display_fm_fn_rates: Displays FMR and FNMR at specific threshold values with confidence intervals.
+Key Variables
+dimensions: List of dimension values (40 to 200) tested for CRR in dimensionality reduction.
+cosine_crr_values: Holds calculated CRR values for each tested dimension.
+matched_dists/nonmatched_dists: Distance lists for true matches and false matches used in ROC analysis.
+default_thresholds: Range of thresholds (0.04 to 0.1) used in ROC evaluation.
+fmrs/fnmrs: Calculated FMR/FNMR rates for evaluating the model’s error rates at various thresholds.
+
+
+Iris Recognition: Combines the functions from the other files into the overall process. Applies image rotations, fetches images, handles multiple filter calls, and passes feature vectors to return accuracy and plot charts. 
+
+
+Limitations and Improvements
+----------------------------
+Fixed 16x16 and 32x32 blocks for background estimation and contrast enhancement might not adapt well to images of varying sizes and resolutions, potentially leading to uneven processing
+To improve: Use dynamic block size values relative to the input image dimensions
+
+Hard-coded Hough Circle Transform parameters may not generalize to all iris images. This could result in missed or incorrect detections in images with different pupil/iris sizes or poor lighting condition
+Occlusions from eyelids and eyelashes are over accounted for, which can distort the feature extraction process
+In the current implementation, the image is cropped to its upper portion to prevent any occlusion, but this hides potentially useful data.
+To improve: Add a preprocessing step to mask or exclude only areas occluded by eyelids or eyelashes could improve accuracy
+
+We are currently using KNN instead of a nearest center classifier, although we did implement the nearest center classifier. Our results were significantly improved using
+KNN so we chose to deviate from the paper. The centroid implementation is commented out in the code. 
+
+
+Peer Evaluation
+---------------
+
+            IrisRecognition IrisLocalization IrisNormalization ImageEnhancement FeatureExtraction IrisMatching PerformanceEvaluation Readme File
+kir2117     X               X                X                                  X                 X                                  X
+gs3280      X               X                X                 X                                               X                     X
+pw2594                                                                                            X            X                     X
