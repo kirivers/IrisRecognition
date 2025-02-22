@@ -1,10 +1,15 @@
 
-Group Project: Iris Texture Analysis and Recognition
-Kaylen Rivers (kir2117), Gauri Samith (gs3280), Pinqiao Wang (pw2594)
+Iris Texture Analysis and Recognition
+Kaylen Rivers
 
 
-Design Overview and Logic
--------------------------
+Overview
+--------
+Implementation of the research paper "Personal Identification Based on Iris Texture Analysis", by
+Li Ma, Tieniu Tan, Senior Member, IEEE, Yunhong Wang, Member, IEEE, and Dexin Zhang.
+
+Breakdown
+---------
 
 Pupil and Iris Detection: The initial detection uses simple intensity projections and contour analysis for efficient and fairly accurate pupil localization. The iris is detected through edge-based Hough Circle Transform within a binarized region, targeting circular patterns.
 get_pupil_center() : This estimates the pupil center using the vertical and horizontal projections of pixel intensities. 
@@ -63,14 +68,5 @@ Occlusions from eyelids and eyelashes are over accounted for, which can distort 
 In the current implementation, the image is cropped to its upper portion to prevent any occlusion, but this hides potentially useful data.
 To improve: Add a preprocessing step to mask or exclude only areas occluded by eyelids or eyelashes could improve accuracy
 
-We are currently using KNN instead of a nearest center classifier, although we did implement the nearest center classifier. Our results were significantly improved using
-KNN so we chose to deviate from the paper. The centroid implementation is commented out in the code. 
-
-
-Peer Evaluation
----------------
-
-            IrisRecognition IrisLocalization IrisNormalization ImageEnhancement FeatureExtraction IrisMatching PerformanceEvaluation Readme File
-kir2117     X               X                X                                  X                 X                                  X
-gs3280      X               X                X                 X                                               X                     X
-pw2594                                                                                            X            X                     X
+I am currently using KNN instead of a nearest center classifier, although I did implement the nearest center classifier. My results were significantly improved using
+KNN so I chose to deviate from the paper. The centroid implementation is commented out in the code. 
